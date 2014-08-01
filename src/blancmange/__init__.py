@@ -6,25 +6,24 @@ import argparse
 import logging
 
 from sqlalchemy import create_engine
-from blancmange.models import DBSession, Base
+from blancmange.models import DBSession, Base, Episode, Person, Sketch, Keyword
 from blancmange.creation import creation
 
 logging.basicConfig(level=logging.DEBUG)
 from blancmange.config import log
 
 
-def main():
+def _database_parser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-c', '--create-tables',
                         action='store_true',
                         help='Create tables in given database.')
-    parser.add_argument('-r', '--read-code',
-                        action='store_true',
-                        help='Read code from Python source')
     parser.add_argument('database', default="sqlite:///:memory:", help='Database file to use')
-    config = parser.parse_args()
+    return parser
 
+
+def _config_database(config):
     # Database configuration
     database = 'sqlite:///%s' % config.database \
         if '://' not in config.database else config.database
@@ -37,9 +36,30 @@ def main():
         Base.metadata.create_all()
         creation(DBSession)
 
+
+def flying_circus_stats():
+    parser = _database_parser()
+    config = parser.parse_args()
+    _config_database(config)
+
+
+    keywords = DBSession.query(Keyword).all()
+    print ('%i words said in total.' % len(keywords))
+
+    people = DBSession.query(Person).all()
+    for person in people:
+        print('{}: {} keywords, {:.1%} of total'.format(person.name, len(person.keywords), len(person.keywords)*1.0/len(keywords)))
+
+
+def main():
+    parser = _database_parser()
+    parser.add_argument('path', help='Path or directory to scan for files to check.')
+    config = parser.parse_args()
+    _config_database(config)
+
     if config.read_code:
-        # XXX Blindly reads the Python source code.  Splitting up into documentation would help.
-        source_files = [os.path.join(dirpath, filename) for dirpath, dirnames, filenames in os.walk('./src/python') for filename in filenames if '/.' not in dirpath and str(mimetypes.guess_type(filename)[0]).startswith('text/')]
+        # XXX Blindly reads the given source code.  Splitting up into documentation would help.
+        source_files = [os.path.join(dirpath, filename) for dirpath, dirnames, filenames in os.walk(config.path) for filename in filenames if '/.' not in dirpath and str(mimetypes.guess_type(filename)[0]).startswith('text/')]
         all_source = cStringIO.StringIO()
         for f in source_files:
             with open(f, 'r') as opened:
@@ -48,14 +68,7 @@ def main():
         python_source = all_source.read().lower()
 
 
-    from blancmange.models import Episode, Person, Sketch, Keyword
     episodes = DBSession.query(Episode).all()
-    people = DBSession.query(Person).all()
-    keywords = DBSession.query(Keyword).all()
-
-    print ('%i words said in total.' % len(keywords))
-    for person in people:
-        print('{}: {} keywords, {:.1%} of total'.format(person.name, len(person.keywords), len(person.keywords)*1.0/len(keywords)))
 
     word_totals = {}
     for episode in episodes:
@@ -77,6 +90,7 @@ def main():
     print('====\t\t=====\t\t=====')
     for result in results_sorted:
         print('%s\t\t%i\t\t%i' % result)
+
 
 #XXX Analysis needs to strip out all the common words
 

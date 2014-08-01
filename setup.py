@@ -40,5 +40,6 @@ setup(name='blancmange',
       entry_points="""\
       [console_scripts]
       blancmange = blancmange:main
+      flying-circus = blancmange:flying_circus_stats
       """,
       )
