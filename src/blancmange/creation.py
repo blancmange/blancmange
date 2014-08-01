@@ -6,8 +6,8 @@ import re
 from pyquery import PyQuery
 from textblob import TextBlob
 
-from its.config import log
-from its.models import Person, Episode, Sketch, Keyword
+from blancmange.config import log
+from blancmange.models import Person, Episode, Sketch, Keyword
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -91,7 +91,7 @@ def creation(dbsession):
                 for line_spoken in sketch.dom('font'):
                     line_actor = people[line_spoken.attrib['id']]
                     line_words = TextBlob(PyQuery(line_spoken).text())
-                    # XXX It's gets separated.  Good enough
+                    # XXX Contractions get separated (eg "It's")
                     for word in line_words.words.lower():
                         keyword = Keyword(keyword=word, person=line_actor)
                         sketch.keywords.append(keyword)

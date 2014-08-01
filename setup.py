@@ -20,27 +20,25 @@ requires = [
     'ipdb',
     ]
 
-setup(name='its',
+setup(name='blancmange',
       version='0.1dev0',
-      description='its',
+      description="Determine what's missing from Python by using Python.",
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
-        "Framework :: Pyramid",
-        "Topic :: Internet :: WWW/HTTP",
-        "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
         ],
       author='David Beitey',
-      author_email='qnivq@qnivqwo.pbz'.decode('rot-13'),
-      url='http://davidjb.com',
-      keywords='python keywords flying circus',
-      packages=find_packages(),
+      author_email='david' + chr(64) + 'davidjb.com',
+      url='http://github.com/davidjb/blancmange',
+      keywords='python keywords flying circus blancmange',
+      packages=find_packages('src'),
+      package_dir={'': 'src'},
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
-      setup_requires=[],#['setuptools-git'],
+      setup_requires=['setuptools-git'],
       entry_points="""\
       [console_scripts]
-      its = its:main
+      blancmange = blancmange:main
       """,
       )
