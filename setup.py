@@ -21,7 +21,7 @@ requires = [
     ]
 
 setup(name='blancmange',
-      version='0.1dev0',
+      version='0.1',
       description="Determine what's missing from Python by using Python.",
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
