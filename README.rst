@@ -19,10 +19,14 @@ Use it to Python-ise your Python.
 In addition, it can output some fun statistics and answer some queries regarding
 the 45 standard English-language Flying Circus episodes, including:
 
-* Total words spoken (165,483)
-* Who spoke the most out of the Pythons (Michael Palin, with 24% of the words)
-* How often Spam was mentioned
-*  ...
+* Total words spoken (165,483) [#f1]_
+* Total lines spoken (10,100) [#f1]_
+* Total number of sketches (~510) [#f1]_
+* Which Python spoke the most words (Michael Palin, with 24%)
+* How often Spam was mentioned (74 times in Flying Circus, 2225 times in CPython!)
+* ...
+
+.. [#f1] According to the source material.
 
 
 **Lacking rugged lumberjacks in your logging?**
@@ -36,5 +40,15 @@ Todo
 ====
 
 * Suggest where to add Python references and references which are needed.
+* Better code analysis and processing.  Just within comments or documentation,
+  for example, or just variables.
+
+Installation
+============
+
+Install with ``easy_install blancmange`` or ``Buildout`` with the
+``buildout.cfg`` in this package/repository.  Buildout is the easiest option
+as this helps manage other parts such as episode data, and cloning the
+CPython source automatically.
 
 

@@ -40,10 +40,20 @@ class TextContainer(Base):
 
 class Person(Base):
     """ People need to be locatable using their id in the documents.
+
+    Luckily all the Pythons have two-word names.
     """
     __tablename__ = 'people'
     id = Column(Unicode, primary_key=True)
     name = Column(Unicode)
+
+    @property
+    def first_name(self):
+        return self.name.split()[0]
+
+    @property
+    def surname(self):
+        return self.name.split()[1]
 
     def __repr__(self):
         return '<Person %s>' % self.name
@@ -83,6 +93,10 @@ class Sketch(TextContainer):
                           secondary=Keyword.__table__,
                           backref=backref('sketches'))
 
+    @property
+    def lines(self):
+        return self.dom('font')
+
     def __repr__(self):
         return '<Sketch "%s" in "%s">' % \
             (self.name.encode('utf8'), self.episode.name.encode('utf8') if self.episode else self.episode)
@@ -98,6 +112,10 @@ class Episode(TextContainer):
     @property
     def season(self):
         return int(EPISODES[self.number][0][0])
+
+    @property
+    def textblob_spoken(self):
+        return TextBlob(self.dom('font').text())
 
     def __repr__(self):
         return '<Episode %i: "%s">' % (self.number, self.name.encode('utf8'))

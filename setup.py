@@ -41,5 +41,6 @@ setup(name='blancmange',
       [console_scripts]
       blancmange = blancmange:main
       flying-circus = blancmange:flying_circus_stats
+      completely-different = blancmange:completely_different
       """,
       )

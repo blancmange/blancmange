@@ -16,7 +16,7 @@ EPISODES = None
 
 # Process the files
 def creation(dbsession):
-# XXX This should be TheTVDB, except its DB/PHP fails :(
+    # XXX This should be TheTVDB, except its DB/PHP fails :(
     with open(os.path.join(here, 'episodes.html'), 'rb') as episodes_file:
         episode_html = episodes_file.read()
         episode_rows = PyQuery(episode_html)('#listtable tr')
@@ -28,7 +28,7 @@ def creation(dbsession):
         # Construct our dictionary of episodes
         EPISODES = dict(enumerate(episodes_clean, 1))
 
-    episode_paths = glob.glob(here + '/www.ibras.dk/montypython/episode*')
+    episode_paths = glob.glob(os.path.join(here, 'www.ibras.dk', 'montypython', 'episode*'))
     people = {}
 
     for path in episode_paths:
@@ -86,9 +86,9 @@ def creation(dbsession):
                 # Can be processed for any general words or terms later
                 sketch.raw = sketch_html
 
-                # XXX Process keywords, determining who said what.  Probably use <font> here.
+                # Process keywords, determining who said what.
                 # Anything not in a font-tag is considered unspoken (at least by anyone who matters)
-                for line_spoken in sketch.dom('font'):
+                for line_spoken in sketch.lines:
                     line_actor = people[line_spoken.attrib['id']]
                     line_words = TextBlob(PyQuery(line_spoken).text())
                     # XXX Contractions get separated (eg "It's")
