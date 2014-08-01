@@ -1,6 +1,9 @@
 Blancmange
 ==========
 
+**Do you have enough Python in your Python?**
+
+
 Blancmange is sweet dessert that once featured in Monty Python's Flying Circus
 playing tennis.  At the time of writing, this term isn't featured anywhere in
 the CPython core code or documentation.  This is sad since the notion of a
@@ -18,6 +21,20 @@ the 45 standard English-language Flying Circus episodes, including:
 
 * Total words spoken (165,483)
 * Who spoke the most out of the Pythons (Michael Palin, with 24% of the words)
-* How often Spam was mentioned (
+* How often Spam was mentioned
+*  ...
 
-(yes, I know about the German episodes and specials)
+
+**Lacking rugged lumberjacks in your logging?**
+
+**Not enough fun in your functions?**
+
+Try Blancmanage today!
+
+
+Todo
+====
+
+* Suggest where to add Python references and references which are needed.
+
+
