@@ -4,7 +4,8 @@ Changelog
 0.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Update project URL.
+  [davidjb]
 
 
 0.2 (2014-08-03)
