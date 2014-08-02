@@ -22,7 +22,7 @@ requires = [
 
 setup(name='blancmange',
       version='0.2.dev0',
-      description="Determine what's missing from Python by using Python.",
+      description="Determine what's missing from Python by using Monty Python's Flying Circus.",
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
