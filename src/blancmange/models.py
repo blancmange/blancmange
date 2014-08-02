@@ -63,7 +63,7 @@ class Keyword(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     keyword = Column(Unicode)
     person_id = Column(Unicode, ForeignKey('people.id'))
-    sketch_id = Column(Unicode, ForeignKey('sketches.id'))
+    sketch_id = Column(Integer, ForeignKey('sketches.id'))
 
     person = relationship('Person', backref='keywords')
 
@@ -82,10 +82,10 @@ class Keyword(Base):
 
 class Sketch(TextContainer):
     __tablename__ = 'sketches'
-    id = Column(Unicode, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    internal_id = Column(Unicode)
     episode_number = Column(Integer,
-                            ForeignKey('episodes.number'),
-                            primary_key=True)
+                            ForeignKey('episodes.number'))
     name = Column(Unicode, nullable=False)
     keywords = relationship('Keyword',
                             backref=backref('sketch', uselist=False))
@@ -107,7 +107,7 @@ class Episode(TextContainer):
     number = Column(Integer, primary_key=True)
     name = Column(Unicode, nullable=False)
     sketches = relationship('Sketch',
-                            backref='episode')
+                            backref=backref('episode', uselist=False))
 
     @property
     def season(self):

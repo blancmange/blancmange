@@ -15,7 +15,7 @@ requires = [
     'textblob',
     'pyquery',
     'lxml',
-    'requests',
+    'pygments',
     'ipython',
     'ipdb',
     ]
@@ -40,7 +40,9 @@ setup(name='blancmange',
       entry_points="""\
       [console_scripts]
       blancmange = blancmange:main
+      flying-circus-db = blancmange:create_database
       flying-circus = blancmange:flying_circus_stats
+      spot-camels = blancmange:find_episode
       completely-different = blancmange:completely_different
       """,
       )

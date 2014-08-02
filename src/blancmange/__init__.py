@@ -1,4 +1,5 @@
 from __future__ import print_function
+import copy
 import re
 import random
 import os
@@ -11,15 +12,48 @@ import logging
 import textwrap
 from pprint import pprint
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from textblob import TextBlob
 import IPython
 from pyquery import PyQuery
+from pygments.lexers import PythonLexer, PythonConsoleLexer, PythonTracebackLexer
+from nltk.corpus import brown
+from nltk.probability import FreqDist
 
 from blancmange.models import DBSession, Base, Episode, Person, Sketch, Keyword
 from blancmange.creation import creation
 
 from blancmange.config import log
+
+
+tokens = PythonLexer.tokens['builtins'] + PythonLexer.tokens['keywords']
+PATTERNS = [token[0] for token in tokens]
+
+def _filter_words(results):
+    """ Accepts a dict of word results and spots Python to remove it.
+
+    Kind of like camerl spotting, really.  Except this function will
+    spot camerls and not just a picture of one.
+    """
+    words = copy.copy(results)
+    for word in results:
+        matches = [re.match(pattern, word) for pattern in PATTERNS]
+        if any(matches):
+            del words[word]
+    return words
+
+
+def _calculate_frequencies():
+    """ Spot instances of words within a copus.
+
+    Kind of like camerl spotting, really.  Except this function will
+    spot camels and not just a picture of one.
+    """
+    words = FreqDist()
+    for sentence in brown.sents():
+        for word in sentence:
+            words.inc(word.lower())
+    return words
 
 
 def _print_heading(string):
@@ -30,6 +64,14 @@ def _print_heading(string):
     print('=' * len(string))
     print('')
 
+
+def _print_results(results_items, verbose=False):
+    if verbose:
+        pprint(results_items)
+    else:
+        print(*[result[0] for result in results_items], sep=", ")
+
+
 def _database_parser():
     """ Prepare database parser. Refer to the gorilla librarian.
     """
@@ -38,14 +80,14 @@ def _database_parser():
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         help='Enable verbose logging.')
-    parser.add_argument('-c', '--create-tables',
-                        action='store_true',
-                        help='Create tables in given database.')
-    parser.add_argument('database', default="sqlite:///:memory:", help='Database file to use')
-
+    parser.add_argument('database',
+                        nargs="?",
+                        default="cheese-shop.db",
+                        help='Database file to use')
     return parser
 
-def configure(config):
+
+def configure_environment(config):
     if config.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
@@ -56,10 +98,20 @@ def configure(config):
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
 
-    if config.create_tables:
-        # Create tables & process data if not already existing
-        Base.metadata.create_all()
-        creation(DBSession)
+
+def create_database():
+    """ Script for creating the underlying database.
+    """
+    parser = _database_parser()
+    parser.description = completely_different.__doc__
+    config = parser.parse_args()
+    configure_environment(config)
+
+    # Create tables & process data if not already existing
+    Base.metadata.create_all()
+    creation(DBSession)
+
+    log.info('Created database at %s' % config.database)
 
 
 def completely_different():
@@ -78,7 +130,7 @@ def completely_different():
                         type=int,
                         help='Control the output width of comments.')
     config = parser.parse_args()
-    configure(config)
+    configure_environment(config)
 
     lines = [sketch.lines for sketch in DBSession.query(Sketch).all() if sketch.lines]
     _print_heading('And now for something completely different.  It\'s...')
@@ -93,12 +145,24 @@ def completely_different():
         print(*wrapper.wrap(line_text), sep='\r\n')
 
 
+def find_episode():
+    parser = _database_parser()
+    parser.description = completely_different.__doc__
+    parser.add_argument('term', nargs="+", help='The search term or terms to go hunting for.')
+    config = parser.parse_args()
+    configure_environment(config)
+
+    conditions = [Keyword.keyword == term for term in config.term]
+    import ipdb; ipdb.set_trace()
+    keywords = DBSession.query(Keyword).filter(and_(*conditions)).all()
+
+
 def flying_circus_stats():
     """ Get some statistics about llamas appearing in Flying Circus.
     """
     parser = _database_parser()
     config = parser.parse_args()
-    configure(config)
+    configure_environment(config)
 
     keywords = DBSession.query(Keyword).all()
 
@@ -146,7 +210,7 @@ def main():
                         nargs='+',
                         help='Paths or directories to scan for files to check.')
     config = parser.parse_args()
-    configure(config)
+    configure_environment(config)
 
     # XXX Reads the given source code.  Splitting up into individual file
     # processing would be better.
@@ -173,7 +237,9 @@ def main():
     if config.count_pickle:
         if os.path.exists(config.count_pickle):
             with open(config.count_pickle, 'rb') as pickle:
-                results = cPickle.load(pickle)
+                data = cPickle.load(pickle)
+                results = data['counts'] # Analysis results for current target code
+                frequency = data['frequency'] # Brown copus analysis for words
                 log.debug('Loaded counts from pickle in %s' % config.count_pickle)
 
     if not results:
@@ -200,18 +266,23 @@ def main():
         log.debug('Summed counts for all words within Flying Circus')
         log.debug('Counted all words from Flying Circus inside source code.')
 
+        frequencies = _calculate_frequencies()
+
         if config.count_pickle:
             with open(config.count_pickle, 'wb') as pickle:
-                cPickle.dump(results, pickle)
+                data = {'counts': results, 'frequency': frequency}
+                cPickle.dump(data, pickle)
                 log.debug('Dumped counts to pickle in %s.' % config.count_pickle)
 
 
     results_sorted = sorted(results.items(), key=lambda r: r[1]['score'], reverse=True)
     _print_heading('Words mentioned in source code:')
-    pprint(results_sorted[:100])
+    portion = results_sorted[:100]
+    _print_results(portion, config.verbose)
 
     _print_heading('Words that need love:')
-    pprint(results_sorted[-100:])
+    portion = results_sorted[-100:]
+    _print_results(portion, config.verbose)
 
     _print_heading('Pythons mentioned in source code:')
     people = DBSession.query(Person).all()

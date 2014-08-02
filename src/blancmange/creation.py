@@ -63,7 +63,7 @@ def creation(dbsession):
             sketch_lookup = {}
             for sketch_link in document('a[href*="#"]'):
                 internal_id = re.search('#(.*?)$', sketch_link.attrib['href']).groups()[0]
-                sketch_lookup[internal_id] = Sketch(id=internal_id,
+                sketch_lookup[internal_id] = Sketch(internal_id=internal_id,
                                                     name=sketch_link.text)
 
             # Process the rest of the HTML in the document to find sketch details
@@ -74,7 +74,7 @@ def creation(dbsession):
                 first = sketch_html[:sketch_html.find('"')]
                 if not first.isnumeric():
                     # No sketch, add to general episode keywords
-                    sketch = Sketch(id=0, name='Introduction')
+                    sketch = Sketch(internal_id=0, name='Introduction')
                 else:
                     # Crazy assumption: final credits are part of final skit.
                     # We can't know better. The Pythons don't, either.
