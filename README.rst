@@ -3,6 +3,9 @@ Blancmange
 
 **Do you have enough Python in your Python?**
 
+.. image:: docs/blancmange.jpg
+   :alt: Blancmange, playing tennis.
+   :width: 200px
 
 Blancmange is sweet dessert that once featured in Monty Python's Flying Circus
 playing tennis.  At the time of writing, this term isn't featured anywhere in
