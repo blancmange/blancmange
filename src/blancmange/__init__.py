@@ -1,16 +1,17 @@
 from __future__ import print_function
-import copy
-import re
-import random
-import os
-import mimetypes
-import sys
-import cStringIO
-import cPickle
 import argparse
+import copy
+import cPickle
+import cStringIO
 import logging
+import mimetypes
+import os
+import pprint
+import random
+import re
+import sys
 import textwrap
-from pprint import pprint
+import webbrowser
 
 from sqlalchemy import create_engine, and_
 from textblob import TextBlob
@@ -67,7 +68,7 @@ def _print_heading(string):
 
 def _print_results(results_items, verbose=False):
     if verbose:
-        pprint(results_items)
+        pprint.pprint(results_items)
     else:
         print(*[result[0] for result in results_items], sep=", ")
 
@@ -130,11 +131,15 @@ def be_completely_different(syntax=True, width=70):
         print(*wrapper.wrap(line_text), sep='\r\n')
 
 
+# Scripts for public enjoyment.
+
 def completely_different():
     """ Be completely different and return a line from Flying Circus.
 
     Lines are formatted in Python source comment style for easy
     inclusion in your code!
+
+    Script is completely-different.
     """
     parser = _database_parser()
     parser.description = completely_different.__doc__
@@ -153,10 +158,17 @@ def completely_different():
 
 def find_episode():
     """ Let's go camel spotting and find the episode that you want.
+
+    Script is spot-camels.
     """
     parser = _database_parser()
     parser.description = completely_different.__doc__
-    parser.add_argument('term', type=unicode, help='The search term or terms to go hunting for.')
+    parser.add_argument('-w', '--web-browser',
+                        action='store_true',
+                        help='Open the first resulting episode in your web browser.')
+    parser.add_argument('term',
+                        type=unicode,
+                        help='The search term or terms to go hunting for.')
     config = parser.parse_args()
     configure_environment(config)
 
@@ -167,12 +179,19 @@ def find_episode():
 
     if not results:
         log.error("I'm sorry, I'm not allowed to argue any more.")
+    else:
+        if config.web_browser:
+            episode = results[0][0]
+            url = 'file://' + episode.path
+            webbrowser.open(url)
 
     #episodes = DBSession.query(Episode).join(Sketch, Keyword).filter(and_(*conditions)).all()
 
 
 def flying_circus_stats():
     """ Get some statistics about llamas appearing in Flying Circus.
+
+    Script is flying-circus.
     """
     parser = _database_parser()
     config = parser.parse_args()

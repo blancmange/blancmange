@@ -108,6 +108,7 @@ class Episode(TextContainer):
     name = Column(Unicode, nullable=False)
     sketches = relationship('Sketch',
                             backref=backref('episode', uselist=False))
+    path = Column(Unicode, nullable=False)
 
     @property
     def season(self):

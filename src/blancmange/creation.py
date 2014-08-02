@@ -13,6 +13,7 @@ from blancmange.models import Person, Episode, Sketch, Keyword
 here = os.path.abspath(os.path.dirname(__file__))
 
 EPISODES = None
+EPISODE_PATH = os.path.join(here, 'www.ibras.dk', 'montypython', 'episode')
 
 # Process the files
 def creation(dbsession):
@@ -28,7 +29,7 @@ def creation(dbsession):
         # Construct our dictionary of episodes
         EPISODES = dict(enumerate(episodes_clean, 1))
 
-    episode_paths = glob.glob(os.path.join(here, 'www.ibras.dk', 'montypython', 'episode*'))
+    episode_paths = glob.glob(EPISODE_PATH + '*')
     people = {}
 
     for path in episode_paths:
@@ -56,8 +57,9 @@ def creation(dbsession):
 
             # Create the episode object
             episode = Episode(number=episode_number,
-                            name=episode_name,
-                            raw=sketches_wrapper.html())
+                              name=episode_name,
+                              raw=sketches_wrapper.html(),
+                              path=path)
 
             # Process sketch links so we know which sketches are in a document.
             sketch_lookup = {}
