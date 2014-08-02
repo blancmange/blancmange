@@ -17,7 +17,7 @@ from sqlalchemy import create_engine, and_
 from textblob import TextBlob
 import IPython
 from pyquery import PyQuery
-from pygments.lexers import PythonLexer, PythonConsoleLexer, PythonTracebackLexer
+from pygments.lexers import PythonLexer
 from nltk.corpus import brown
 from nltk.probability import FreqDist
 
@@ -28,7 +28,17 @@ from blancmange.config import log
 
 
 tokens = PythonLexer.tokens['builtins'] + PythonLexer.tokens['keywords']
-PATTERNS = [token[0] for token in tokens]
+PATTERNS = [re.compile(token[0]) for token in tokens]
+
+
+def match_syntax(word):
+    """ Accepts a dict of word results and spots matches.
+
+    Kind of like camerl spotting, really.  Except this function will
+    spot camerls and not just a picture of one.
+    """
+    return any(pattern.match(word) for pattern in PATTERNS)
+
 
 def _filter_words(results):
     """ Accepts a dict of word results and spots Python to remove it.
@@ -36,12 +46,8 @@ def _filter_words(results):
     Kind of like camerl spotting, really.  Except this function will
     spot camerls and not just a picture of one.
     """
-    words = copy.copy(results)
-    for word in results:
-        matches = [re.match(pattern, word) for pattern in PATTERNS]
-        if any(matches):
-            del words[word]
-    return words
+    return {word: results[word] for word in results if not match_syntax(word)}
+
 
 
 def _calculate_frequencies():
@@ -73,6 +79,11 @@ def _print_results(results_items, verbose=False):
         print(*[result[0] for result in results_items], sep=", ")
 
 
+def print_wordle(results_sorted):
+    for word, result in results_sorted[:250]:
+        print('%s:%i' % (word, result['score']))
+
+
 def _database_parser():
     """ Prepare database parser. Refer to the gorilla librarian.
     """
@@ -87,6 +98,24 @@ def _database_parser():
                         help='Database file to use')
     return parser
 
+
+def calculate_score(word, frequencies, source_normalisation=1, python_weight=2, frequency_factor=1):
+    """
+    'score': (source_count * normalisation) + (flying_circus_count ** 2)
+    """
+    if word['source_count'] == 0:
+        return 0
+    source = word['source_count'] * source_normalisation
+    flying_circus = word['flying_circus_count'] ** python_weight
+    frequency = frequencies.get(word['word'], frequency_factor)
+    return (source * flying_circus) / frequency
+
+def recalculate_scores(results, frequencies, **kwargs):
+    for word in results:
+        results[word]['score'] = calculate_score(results[word], frequencies, **kwargs)
+
+def sort_results(results):
+    return sorted(results.items(), key=lambda r: r[1]['score'], reverse=True)
 
 def configure_environment(config):
     if config.verbose:
@@ -131,7 +160,8 @@ def be_completely_different(syntax=True, width=70):
         print(*wrapper.wrap(line_text), sep='\r\n')
 
 
-# Scripts for public enjoyment.
+# Scripts for enjoyment of your package.
+# Please mind out for dirty forks & knives.
 
 def completely_different():
     """ Be completely different and return a line from Flying Circus.
@@ -172,7 +202,7 @@ def find_episode():
     config = parser.parse_args()
     configure_environment(config)
 
-    conditions = [Keyword.keyword == term for term in config.term.split()]
+    conditions = [Keyword.keyword == term.lower() for term in config.term.split()]
     results = DBSession.query(Episode, Sketch).join(Sketch, Keyword).filter(and_(*conditions)).all()
     for episode, sketch in results:
         print('%s in %r' % (sketch.name, episode))
@@ -211,11 +241,11 @@ def flying_circus_stats():
 
     print('%i total sketches' % DBSession.query(Sketch).count())
     print('%i total lines' % \
-        sum([len(sketch.lines) for sketch in DBSession.query(Sketch).all()]))
-    print('%i total words in the script' % sum([len(episode.textblob.words)
-        for episode in DBSession.query(Episode).all()]))
+        sum(len(sketch.lines) for sketch in DBSession.query(Sketch).all()))
+    print('%i total words in the script' % sum(len(episode.textblob.words)
+        for episode in DBSession.query(Episode).all()))
 
-    completely_different()
+    be_completely_different(syntax=False)
 
 
 def main():
@@ -238,6 +268,7 @@ def main():
                         action='store_true',
                         help='Only process and count words spoken, not the whole TV script.')
     parser.add_argument('-p', '--count-pickle',
+                        default='cheese-shop-cheddar.pickle',
                         help='Location to store the count structure pickle for speed.')
     parser.add_argument('path',
                         nargs='+',
@@ -267,18 +298,23 @@ def main():
 
     # Sum all words
     results = {}
+    frequencies = None
     if config.count_pickle:
         if os.path.exists(config.count_pickle):
             with open(config.count_pickle, 'rb') as pickle:
                 data = cPickle.load(pickle)
                 results = data['counts'] # Analysis results for current target code
-                frequency = data['frequency'] # Brown copus analysis for words
+                frequencies = data['frequencies'] # Brown copus analysis for words
                 log.debug('Loaded counts from pickle in %s' % config.count_pickle)
 
+    if not frequencies:
+        frequencies = _calculate_frequencies()
+
     if not results:
+        normalisation = sum(len(episode.text) for episode in episodes) / (len(python_source) * 1.0)
+
         # Calculate what factor we need to decrease our source-count by
         # to normalise with the Flying Circus scripts.
-        normalisation = sum([len(episode.text) for episode in episodes]) / (len(python_source) * 1.0)
         for episode in episodes:
             if not config.spoken_only:
                 counts = episode.textblob.word_counts
@@ -289,26 +325,30 @@ def main():
                 if len(word) >= config.min_length:
                     word = word.encode('utf8')
                     flying_circus_count = results[word]['flying_circus_count'] + count if word in results else count
+                    # XXX A serious CPU sucker. Needs to be improved.
                     source_count = python_source.count(word) # TextBlob possible?
-                    results[word] = {
-                        'source_count': source_count,
-                        'flying_circus_count': flying_circus_count,
-                        'score': (source_count * normalisation) + (flying_circus_count ** 2)
-                    }
+
+                    results[word] = {'word': word,
+                                     'source_count': source_count,
+                                     'flying_circus_count': flying_circus_count,
+                                     'score': 0}
+                    results[word]['score'] = calculate_score(results[word], frequencies, normalisation, 2, 0.3)
             log.debug('Finished processing for %r' % episode)
         log.debug('Summed counts for all words within Flying Circus')
         log.debug('Counted all words from Flying Circus inside source code.')
 
-        frequencies = _calculate_frequencies()
+        # Strip Python syntax
+        #results = 
+
 
         if config.count_pickle:
             with open(config.count_pickle, 'wb') as pickle:
-                data = {'counts': results, 'frequency': frequency}
+                data = {'counts': results, 'frequencies': frequencies}
                 cPickle.dump(data, pickle)
                 log.debug('Dumped counts to pickle in %s.' % config.count_pickle)
 
 
-    results_sorted = sorted(results.items(), key=lambda r: r[1]['score'], reverse=True)
+    results_sorted = sort_results(results)
     _print_heading('Words mentioned in source code:')
     portion = results_sorted[:100]
     _print_results(portion, config.verbose)
@@ -342,3 +382,4 @@ def main():
 # Hand editing of data was required - some errors are present! Yikes! (episode13.html has duplicate IDs)
 # Final credits are considered part of the final sketch.  This is inconsistent depending on episode.
 # Some discrepency over the episode titles. Accepting first Wikipedia title for each episode as true. I don't have my DVD box set with me.  Feel free to come riff with me afterwards.
+

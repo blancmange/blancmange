@@ -35,7 +35,7 @@ Usage
 
 **Not enough fun in your functions?**
 
-Try Blancmanage today!
+Try (a) Blancmanage today!
 
 Script details
 --------------
@@ -46,7 +46,8 @@ Script details
 **flying-circus**
     Output statistics on Flying Circus scripts.
 **completely-different**
-    Get a random line from Monty Python's Flying Circus
+    Get a random line from Monty Python's Flying Circus. Pass ``-w`` to
+    open in a web browser for easy access.
 **blancmange**
     Perform textual analysis of a specified code base compared to the Flying
     Circus scripts.  Helpfully offers which areas of Monty Python you are
