@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2 (unreleased)
+0.2 (2014-08-03)
 ----------------
 
 - Improve scoring algorithm for source vs Monty Python references.
