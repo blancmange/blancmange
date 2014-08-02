@@ -3,7 +3,7 @@ Blancmange
 
 **Do you have enough Python in your Python?**
 
-.. image:: docs/blancmange.jpg
+.. image:: https://github.com/blancmange/blancmange/raw/master/docs/blancmange.jpg
    :alt: Blancmange, playing tennis.
    :width: 200px
 
