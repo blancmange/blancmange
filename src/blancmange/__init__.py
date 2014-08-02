@@ -90,6 +90,8 @@ def _database_parser():
 def configure_environment(config):
     if config.verbose:
         logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.WARN)
 
     # Database configuration
     database = 'sqlite:///%s' % config.database \
@@ -114,6 +116,20 @@ def create_database():
     log.info('Created database at %s' % config.database)
 
 
+def be_completely_different(syntax=True, width=70):
+    lines = [sketch.lines for sketch in DBSession.query(Sketch).all() if sketch.lines]
+    _print_heading('And now for something completely different.  It\'s...')
+    line_text = PyQuery(random.choice(random.choice(lines))).text()
+
+    if not syntax:
+        print(line_text)
+    else:
+        wrapper = textwrap.TextWrapper(width=width,
+                                       initial_indent="# ",
+                                       subsequent_indent="# ")
+        print(*wrapper.wrap(line_text), sep='\r\n')
+
+
 def completely_different():
     """ Be completely different and return a line from Flying Circus.
 
@@ -132,29 +148,27 @@ def completely_different():
     config = parser.parse_args()
     configure_environment(config)
 
-    lines = [sketch.lines for sketch in DBSession.query(Sketch).all() if sketch.lines]
-    _print_heading('And now for something completely different.  It\'s...')
-    line_text = PyQuery(random.choice(random.choice(lines))).text()
-
-    if config.no_syntax:
-        print(line_text)
-    else:
-        wrapper = textwrap.TextWrapper(width=config.width,
-                                       initial_indent="# ",
-                                       subsequent_indent="# ")
-        print(*wrapper.wrap(line_text), sep='\r\n')
+    be_completely_different(syntax=not config.no_syntax, width=config.width)
 
 
 def find_episode():
+    """ Let's go camel spotting and find the episode that you want.
+    """
     parser = _database_parser()
     parser.description = completely_different.__doc__
-    parser.add_argument('term', nargs="+", help='The search term or terms to go hunting for.')
+    parser.add_argument('term', type=unicode, help='The search term or terms to go hunting for.')
     config = parser.parse_args()
     configure_environment(config)
 
-    conditions = [Keyword.keyword == term for term in config.term]
-    import ipdb; ipdb.set_trace()
-    keywords = DBSession.query(Keyword).filter(and_(*conditions)).all()
+    conditions = [Keyword.keyword == term for term in config.term.split()]
+    results = DBSession.query(Episode, Sketch).join(Sketch, Keyword).filter(and_(*conditions)).all()
+    for episode, sketch in results:
+        print('%s in %r' % (sketch.name, episode))
+
+    if not results:
+        log.error("I'm sorry, I'm not allowed to argue any more.")
+
+    #episodes = DBSession.query(Episode).join(Sketch, Keyword).filter(and_(*conditions)).all()
 
 
 def flying_circus_stats():

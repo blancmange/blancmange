@@ -28,6 +28,8 @@ the 45 standard English-language Flying Circus episodes, including:
 
 .. [#f1] According to the source material.
 
+Usage
+=====
 
 **Lacking rugged lumberjacks in your logging?**
 
@@ -35,13 +37,20 @@ the 45 standard English-language Flying Circus episodes, including:
 
 Try Blancmanage today!
 
+Script details
+--------------
 
-Todo
-====
-
-* Suggest where to add Python references and references which are needed.
-* Better code analysis and processing.  Just within comments or documentation,
-  for example, or just variables.
+**flying-circus-db**
+    Create the database that underpins the whole package. Draws data from
+    the included HTML files.
+**flying-circus**
+    Output statistics on Flying Circus scripts.
+**completely-different**
+    Get a random line from Monty Python's Flying Circus
+**blancmange**
+    Perform textual analysis of a specified code base compared to the Flying
+    Circus scripts.  Helpfully offers which areas of Monty Python you are
+    lacking.
 
 Installation
 ============
@@ -50,5 +59,15 @@ Install with ``easy_install blancmange`` or ``Buildout`` with the
 ``buildout.cfg`` in this package/repository.  Buildout is the easiest option
 as this helps manage other parts such as episode data, and cloning the
 CPython source automatically.
+
+Todo
+====
+
+* Expand to encompass the movies and other specials
+* Suggest where to add Python references and references which are needed.
+  Working for non-Python languages would be a plus ;)
+* Better code analysis and processing.  Just within comments or documentation,
+  for example, or just variables.
+
 
 
